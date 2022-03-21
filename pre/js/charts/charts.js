@@ -32,7 +32,7 @@ export function initChart(iframe) {
         //Desarrollo del gráfico
         let currentType = 'viz';
 
-        let margin = {top: 10, right: 10, bottom: 100, left: 30},
+        let margin = {top: 10, right: 10, bottom: 20, left: 110},
             width = document.getElementById('viz').clientWidth - margin.left - margin.right,
             height = document.getElementById('viz').clientHeight - margin.top - margin.bottom;
 
@@ -46,38 +46,33 @@ export function initChart(iframe) {
         let paises = d3.map(data, function(d){return(d.Country)}).keys();
         let tipos = ['men_years_after', 'women_years_after'];
         
-        let x = d3.scaleBand()
+        let y = d3.scaleBand()
             .domain(paises)
-            .range([0, width])
-            .padding([0.35]);
+            .range([0, height])
+            .padding([0.2]);
 
-        let xAxis = function(g) {
-            g.call(d3.axisBottom(x));
+        let yAxis = function(g) {
+            g.call(d3.axisLeft(y));
             g.call(function(svg) {
-                svg.selectAll("text")  
-                .style("text-anchor", "end")
-                .attr("dx", "-.4em")
-                .attr("dy", ".15em")
-                .attr("transform", "rotate(-45)")
+                svg.selectAll("text")
                 .style("font-weight", function(d) { if(d == 'Spain') { return '700'} else { return '400'; }});
             });
         }
 
-        svg.append("g")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-            
+        svg.append("g")            
+            .call(yAxis);            
 
-        let y = d3.scaleLinear()
+        let x = d3.scaleLinear()
             .domain([0, 30])
-            .range([ height, 0 ]);
+            .range([ 0 ,width ]);
         
         svg.append("g")
-            .call(d3.axisLeft(y));
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
 
-        let xSubgroup = d3.scaleBand()
+        let ySubgroup = d3.scaleBand()
             .domain(tipos)
-            .range([0, x.bandwidth()])
+            .range([0, y.bandwidth()])
             .padding([0]);
 
         let color = d3.scaleOrdinal()
@@ -90,34 +85,32 @@ export function initChart(iframe) {
                 .data(data)
                 .enter()
                 .append("g")
-                .attr("transform", function(d) { return "translate(" + x(d.Country) + ",0)"; })
+                .attr("transform", function(d) { return "translate(0," + y(d.Country) + ")"; })
                 .selectAll("rect")
                 .data(function(d) { return tipos.map(function(key) { return {key: key, value: d[key]}; }); })
                 .enter()
                 .append("rect")
                 .attr('class', 'prueba')
-                .attr("x", function(d) { return xSubgroup(d.key); })
-                .attr("width", xSubgroup.bandwidth())
                 .attr("fill", function(d) { return color(d.key); })
-                .attr("y", function(d) { return y(0); })                
-                .attr("height", function(d) { return height - y(0); })
+                .attr("x", x(0) )
+                .attr("y", function(d) { return ySubgroup(d.key); })
+                .attr("height", ySubgroup.bandwidth())
+                .attr("width", function(d) { return x(0); })            
                 .transition()
-                .duration(2000)
-                .attr("y", function(d) { return y(d.value); })                
-                .attr("height", function(d) { return height - y(d.value); });
+                .duration(2000)               
+                .attr("width", function(d) { return x(d.value); });
         }
     
         function animateChart() {
             svg.selectAll(".prueba")
-                .attr("x", function(d) { return xSubgroup(d.key); })
-                .attr("width", xSubgroup.bandwidth())
                 .attr("fill", function(d) { return color(d.key); })
-                .attr("y", function(d) { return y(0); })                
-                .attr("height", function(d) { return height - y(0); })
+                .attr("x", x(0) )
+                .attr("y", function(d) { return ySubgroup(d.key); })
+                .attr("height", ySubgroup.bandwidth())
+                .attr("width", function(d) { return x(0); })            
                 .transition()
-                .duration(2000)
-                .attr("y", function(d) { return y(d.value); })                
-                .attr("height", function(d) { return height - y(d.value); });
+                .duration(2000)               
+                .attr("width", function(d) { return x(d.value); });
         }
 
         ///// CAMBIO
