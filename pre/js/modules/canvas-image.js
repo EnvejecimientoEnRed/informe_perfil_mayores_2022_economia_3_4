@@ -6,7 +6,7 @@ function setChartCanvas() {
 }
 
 function setCustomCanvas() {
-    html2canvas(document.querySelector("#chart"), {width: document.querySelector("#chart").clientWidth, height: document.querySelector("#chart").clientHeight, imageTimeout: 6000, useCORS: true}).then(canvas => { innerCustomCanvas = canvas; });
+    html2canvas(document.querySelector("#viz"), {width: document.querySelector("#viz").clientWidth, height: document.querySelector("#viz").clientHeight, imageTimeout: 6000, useCORS: true}).then(canvas => { innerCustomCanvas = canvas; });
 }
 
 function setChartCanvasImage(title) {    

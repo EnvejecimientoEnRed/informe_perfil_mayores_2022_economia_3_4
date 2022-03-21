@@ -24,15 +24,122 @@ export function initChart(iframe) {
     d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_5/main/data/ocde_life_expectancy_v3.csv', function(error,data) {
         if (error) throw error;
 
-        console.log(data);
-
         // sort data
         data.sort(function(b, a) {
-            return +a.men_years_after - +b.men_years_after;
+            return +a.women_years_after - +b.women_years_after;
         });
 
         //Desarrollo del gráfico
         let currentType = 'viz';
+
+        let margin = {top: 10, right: 10, bottom: 100, left: 30},
+            width = document.getElementById('viz').clientWidth - margin.left - margin.right,
+            height = document.getElementById('viz').clientHeight - margin.top - margin.bottom;
+
+        let svg = d3.select("#viz")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        let paises = d3.map(data, function(d){return(d.Country)}).keys();
+        let tipos = ['men_years_after', 'women_years_after'];
+        
+        let x = d3.scaleBand()
+            .domain(paises)
+            .range([0, width])
+            .padding([0.35]);
+
+        let xAxis = function(g) {
+            g.call(d3.axisBottom(x));
+            g.call(function(svg) {
+                svg.selectAll("text")  
+                .style("text-anchor", "end")
+                .attr("dx", "-.4em")
+                .attr("dy", ".15em")
+                .attr("transform", "rotate(-45)")
+                .style("font-weight", function(d) { if(d == 'Spain') { return '700'} else { return '400'; }});
+            });
+        }
+
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+            
+
+        let y = d3.scaleLinear()
+            .domain([0, 30])
+            .range([ height, 0 ]);
+        
+        svg.append("g")
+            .call(d3.axisLeft(y));
+
+        let xSubgroup = d3.scaleBand()
+            .domain(tipos)
+            .range([0, x.bandwidth()])
+            .padding([0]);
+
+        let color = d3.scaleOrdinal()
+            .domain(tipos)
+            .range([COLOR_PRIMARY_1, COLOR_COMP_1]);
+
+        function initViz() {
+            svg.append("g")
+                .selectAll("g")
+                .data(data)
+                .enter()
+                .append("g")
+                .attr("transform", function(d) { return "translate(" + x(d.Country) + ",0)"; })
+                .selectAll("rect")
+                .data(function(d) { return tipos.map(function(key) { return {key: key, value: d[key]}; }); })
+                .enter()
+                .append("rect")
+                .attr('class', 'prueba')
+                .attr("x", function(d) { return xSubgroup(d.key); })
+                .attr("width", xSubgroup.bandwidth())
+                .attr("fill", function(d) { return color(d.key); })
+                .attr("y", function(d) { return y(0); })                
+                .attr("height", function(d) { return height - y(0); })
+                .transition()
+                .duration(2000)
+                .attr("y", function(d) { return y(d.value); })                
+                .attr("height", function(d) { return height - y(d.value); });
+        }
+    
+        function animateChart() {
+            svg.selectAll(".prueba")
+                .attr("x", function(d) { return xSubgroup(d.key); })
+                .attr("width", xSubgroup.bandwidth())
+                .attr("fill", function(d) { return color(d.key); })
+                .attr("y", function(d) { return y(0); })                
+                .attr("height", function(d) { return height - y(0); })
+                .transition()
+                .duration(2000)
+                .attr("y", function(d) { return y(d.value); })                
+                .attr("height", function(d) { return height - y(d.value); });
+        }
+
+        ///// CAMBIO
+        function setChart(type) {
+            if(type != currentType) {
+                if(type == 'viz') {
+                    //Cambiamos color botón
+                    document.getElementById('data_map').classList.remove('active');
+                    document.getElementById('data_viz').classList.add('active');
+                    //Cambiamos gráfico
+                    document.getElementById('map').classList.remove('active');
+                    document.getElementById('viz').classList.add('active');
+                } else {
+                    //Cambiamos color botón
+                    document.getElementById('data_map').classList.add('active');
+                    document.getElementById('data_viz').classList.remove('active');
+                    //Cambiamos gráfico
+                    document.getElementById('viz').classList.remove('active');
+                    document.getElementById('map').classList.add('active');
+                }
+            }            
+        }
 
         /////
         /////
@@ -71,12 +178,16 @@ export function initChart(iframe) {
         setRRSSLinks('edv_tras_jubilacion');
 
         //Captura de pantalla de la visualización
-        setChartCanvas();
+        //setChartCanvas();
+        setTimeout(() => {
+            setCustomCanvas();
+        }, 6000);
 
         let pngDownload = document.getElementById('pngImage');
 
         pngDownload.addEventListener('click', function(){
-            setChartCanvasImage('edv_tras_jubilacion');
+            //setChartCanvasImage('edv_tras_jubilacion');
+            setChartCustomCanvasImage('edv_tras_jubilacion');
         });
 
         //Altura del frame
