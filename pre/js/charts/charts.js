@@ -21,7 +21,7 @@ COLOR_OTHER_2 = '#731854';
 
 export function initChart(iframe) {
     //Lectura de datos
-    d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_5/main/data/ocde_life_expectancy_v3.csv', function(error,data) {
+    d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_4/main/data/ocde_life_expectancy_v3.csv', function(error,data) {
         if (error) throw error;
 
         // sort data
@@ -165,7 +165,7 @@ export function initChart(iframe) {
         //////
 
         //Iframe
-        setFixedIframeUrl('informe_perfil_mayores_2022_economia_3_5','edv_tras_jubilacion');
+        setFixedIframeUrl('informe_perfil_mayores_2022_economia_3_4','edv_tras_jubilacion');
 
         //Redes sociales > Antes tenemos que indicar cuál sería el texto a enviar
         setRRSSLinks('edv_tras_jubilacion');
