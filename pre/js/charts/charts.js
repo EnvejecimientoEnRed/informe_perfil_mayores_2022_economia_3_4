@@ -21,7 +21,7 @@ COLOR_ANAG_COMP_1 = '#1C5A5E';
 
 export function initChart(iframe) {
     //Lectura de datos
-    d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_4/main/data/ocde_life_expectancy_v3.csv', function(error,data) {
+    d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_4/main/data/ocde_life_expectancy_v2_spanish.csv', function(error,data) {
         if (error) throw error;
 
         // sort data
