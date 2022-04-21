@@ -1,23 +1,16 @@
 //Desarrollo de las visualizaciones
 import * as d3 from 'd3';
-//import { numberWithCommas2 } from './helpers';
-//import { getInTooltip, getOutTooltip, positionTooltip } from './modules/tooltip';
+import { numberWithCommas3 } from '../helpers';
+import { getInTooltip, getOutTooltip, positionTooltip } from '../modules/tooltip';
 import { setChartHeight } from '../modules/height';
 import { setChartCanvas, setChartCanvasImage } from '../modules/canvas-image';
 import { setRRSSLinks } from '../modules/rrss';
 import { setFixedIframeUrl } from './chart_helpers';
 
 //Colores fijos
-const COLOR_PRIMARY_1 = '#F8B05C', 
-COLOR_PRIMARY_2 = '#E37A42',
-COLOR_COMP_1 = '#528FAD', 
-COLOR_COMP_2 = '#AADCE0',
-COLOR_GREY_1 = '#D6D6D6', 
-COLOR_GREY_2 = '#A3A3A3',
-COLOR_ANAG__PRIM_1 = '#BA9D5F', 
-COLOR_ANAG_PRIM_2 = '#9E6C51',
-COLOR_ANAG_PRIM_3 = '#9E3515',
-COLOR_ANAG_COMP_1 = '#1C5A5E';
+const COLOR_PRIMARY_1 = '#F8B05C',
+COLOR_COMP_1 = '#528FAD';
+let tooltip = d3.select('#tooltip');
 
 export function initChart(iframe) {
     //Lectura de datos
@@ -25,18 +18,16 @@ export function initChart(iframe) {
         if (error) throw error;
 
         // sort data
-        data.sort(function(b, a) {
-            return +a.women_years_after - +b.women_years_after;
-        });
+        data.sort(function(b, a) { return +a.women_years_after - +b.women_years_after; });
 
         //Desarrollo del gráfico
         let currentType = 'viz';
 
-        let margin = {top: 10, right: 10, bottom: 20, left: 110},
-            width = document.getElementById('viz').clientWidth - margin.left - margin.right,
-            height = document.getElementById('viz').clientHeight - margin.top - margin.bottom;
+        let margin = {top: 5, right: 10, bottom: 20, left: 110},
+            width = document.getElementById('chart').clientWidth - margin.left - margin.right,
+            height = document.getElementById('chart').clientHeight - margin.top - margin.bottom;
 
-        let svg = d3.select("#viz")
+        let svg = d3.select("#chart")
             .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
@@ -49,26 +40,46 @@ export function initChart(iframe) {
         let y = d3.scaleBand()
             .domain(paises)
             .range([0, height])
-            .padding([0.2]);
+            .padding(0.15)
+            .paddingInner(0.25);
 
         let yAxis = function(g) {
             g.call(d3.axisLeft(y));
             g.call(function(svg) {
                 svg.selectAll("text")
-                .style("font-weight", function(d) { if(d == 'Spain') { return '700'} else { return '400'; }});
+                .style("font-weight", function(d) { if(d == 'España' || d == 'UE-27' || d == 'OCDE') { return '700'} else { return '400'; }});
             });
+            g.call(function(g){g.selectAll('.tick line').remove()});
+            g.call(function(g){g.select('.domain').remove()});
         }
 
-        svg.append("g")            
-            .call(yAxis);            
+        svg.append("g")
+            .attr('class','yaxis')
+            .call(yAxis);           
 
         let x = d3.scaleLinear()
             .domain([0, 30])
             .range([ 0 ,width ]);
         
+        let xAxis = function(g) {
+            g.call(d3.axisBottom(x).ticks(3));
+            svg.call(function(g) {
+                g.call(function(g){
+                    g.selectAll('.tick line')
+                        .attr('class', function(d,i) {
+                            if (d == 0) {
+                                return 'line-special';
+                            }
+                        })
+                        .attr('y1', '0%')
+                        .attr('y2', `-${height}`)
+                });
+            });
+        }
+
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x));
+            .call(xAxis);
 
         let ySubgroup = d3.scaleBand()
             .domain(tipos)
@@ -86,23 +97,75 @@ export function initChart(iframe) {
                 .enter()
                 .append("g")
                 .attr("transform", function(d) { return "translate(0," + y(d.Country) + ")"; })
+                .attr('class', function(d) {
+                    return 'grupo grupo_' + d.Country;
+                })
                 .selectAll("rect")
                 .data(function(d) { return tipos.map(function(key) { return {key: key, value: d[key]}; }); })
                 .enter()
                 .append("rect")
-                .attr('class', 'prueba')
+                .attr('class', function(d) {
+                    return 'rect rect_' + d.key;
+                })
                 .attr("fill", function(d) { return color(d.key); })
                 .attr("x", x(0) )
                 .attr("y", function(d) { return ySubgroup(d.key); })
                 .attr("height", ySubgroup.bandwidth())
-                .attr("width", function(d) { return x(0); })            
+                .attr("width", function(d) { return x(0); })
+                .on('mouseover', function(d,i,e) {
+                    console.log(d);
+                    //Opacidad en barras
+                    let css = e[i].getAttribute('class').split(' ')[1];
+                    let bars = svg.selectAll('.rect');                    
+            
+                    bars.each(function() {
+                        this.style.opacity = '0.4';
+                        let split = this.getAttribute('class').split(" ")[1];
+                        if(split == `${css}`) {
+                            this.style.opacity = '1';
+                        }
+                    });
+
+                    //Tooltip > Recuperamos el año de referencia
+                    let currentCountry = this.parentNode.classList.value;
+                    let sex = d.key == 'women_years_after' ? 'mujeres' : 'hombres';
+
+                    let html = '';
+                    if(d.Country == 'UE-27') {
+                        html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
+                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> tras la jubilación son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en la Unión Europea</p>';
+                    } else if (d.Country == 'OCDE') {
+                        html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
+                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> tras la jubilación son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en la OCDE</p>';
+                    } else {
+                        html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
+                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> tras la jubilación son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en este país</p>';
+                    }                    
+                    
+                    tooltip.html(html);
+
+                    //Tooltip
+                    positionTooltip(window.event, tooltip);
+                    getInTooltip(tooltip);
+
+                })
+                .on('mouseout', function(d,i,e) {
+                    //Quitamos los estilos de la línea
+                    let bars = svg.selectAll('.rect');
+                    bars.each(function() {
+                        this.style.opacity = '1';
+                    });
+                
+                    //Quitamos el tooltip
+                    getOutTooltip(tooltip); 
+                })         
                 .transition()
                 .duration(2000)               
                 .attr("width", function(d) { return x(d.value); });
         }
     
         function animateChart() {
-            svg.selectAll(".prueba")
+            svg.selectAll(".rect")
                 .attr("fill", function(d) { return color(d.key); })
                 .attr("x", x(0) )
                 .attr("y", function(d) { return ySubgroup(d.key); })
@@ -113,7 +176,7 @@ export function initChart(iframe) {
                 .attr("width", function(d) { return x(d.value); });
         }
 
-        ///// CAMBIO
+        ///// CAMBIO GRÁFICO-MAPA
         function setChart(type) {
             if(type != currentType) {
                 if(type == 'viz') {
@@ -132,6 +195,37 @@ export function initChart(iframe) {
                     document.getElementById('map').classList.add('active');
                 }
             }            
+        }
+
+        document.getElementById('order-male').addEventListener('click', function(e) {
+            setViz('men_years_after');
+        });
+
+        document.getElementById('order-female').addEventListener('click', function(e) {
+            setViz('women_years_after');
+        });
+
+        function setViz(tipo) {
+            // sort data
+            data.sort(function(b, a) { return +a[tipo] - +b[tipo]; });
+
+            //Reordenación de eje Y y de columnas
+            paises = d3.map(data, function(d){return(d.Country)}).keys();
+            y.domain(paises);
+            svg.select('.yaxis').call(yAxis);
+
+            svg.selectAll('.grupo')
+                .data(data)
+                .attr("transform", function(d) { return "translate(0," + y(d.Country) + ")"; })
+                .attr('class', function(d) {
+                    return 'grupo grupo_' + d.Country;
+                })
+                .selectAll(".rect")
+                .data(function(d) { return tipos.map(function(key) { return {key: key, value: d[key]}; }); })
+                .attr("x", x(0) )
+                .attr("y", function(d) { return ySubgroup(d.key); })
+                .attr("height", ySubgroup.bandwidth())
+                .attr("width", function(d) { return x(d.value); });
         }
 
         /////
