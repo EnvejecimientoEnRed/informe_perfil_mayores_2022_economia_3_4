@@ -12,7 +12,7 @@ const COLOR_PRIMARY_1 = '#F8B05C',
 COLOR_COMP_1 = '#528FAD';
 let tooltip = d3.select('#tooltip');
 
-export function initChart(iframe) {
+export function initChart() {
     //Lectura de datos
     d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_4/main/data/ocde_life_expectancy_v2_spanish.csv', function(error,data) {
         if (error) throw error;
@@ -84,7 +84,7 @@ export function initChart(iframe) {
         let ySubgroup = d3.scaleBand()
             .domain(tipos)
             .range([0, y.bandwidth()])
-            .padding([0]);
+            .padding(0);
 
         let color = d3.scaleOrdinal()
             .domain(tipos)
@@ -199,10 +199,18 @@ export function initChart(iframe) {
 
         document.getElementById('order-male').addEventListener('click', function(e) {
             setViz('men_years_after');
+
+            setTimeout(() => {
+                setChartCanvas();
+            }, 4000);
         });
 
         document.getElementById('order-female').addEventListener('click', function(e) {
             setViz('women_years_after');
+
+            setTimeout(() => {
+                setChartCanvas();
+            }, 4000);
         });
 
         function setViz(tipo) {
@@ -252,6 +260,10 @@ export function initChart(iframe) {
         //Animación del gráfico
         document.getElementById('replay').addEventListener('click', function() {
             animateChart();
+
+            setTimeout(() => {
+                setChartCanvas();
+            }, 4000);
         });
 
         //////
@@ -265,7 +277,9 @@ export function initChart(iframe) {
         setRRSSLinks('edv_tras_jubilacion');
 
         //Captura de pantalla de la visualización
-        setChartCanvas();
+        setTimeout(() => {
+            setChartCanvas();
+        }, 4000);
 
         let pngDownload = document.getElementById('pngImage');
 
@@ -274,6 +288,6 @@ export function initChart(iframe) {
         });
 
         //Altura del frame
-        setChartHeight(iframe);    
+        setChartHeight();    
     });    
 }
