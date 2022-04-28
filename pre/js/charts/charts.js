@@ -133,13 +133,13 @@ export function initChart() {
                     let html = '';
                     if(d.Country == 'UE-27') {
                         html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
-                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> tras la jubilación son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en la Unión Europea</p>';
+                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en la Unión Europea</p>';
                     } else if (d.Country == 'OCDE') {
                         html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
-                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> tras la jubilación son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en la OCDE</p>';
+                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en la OCDE</p>';
                     } else {
                         html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
-                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> tras la jubilación son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en este país</p>';
+                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en este país</p>';
                     }                    
                     
                     tooltip.html(html);
