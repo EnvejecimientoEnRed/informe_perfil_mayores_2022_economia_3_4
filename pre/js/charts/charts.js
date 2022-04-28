@@ -23,7 +23,7 @@ export function initChart() {
         //Desarrollo del gráfico
         let currentType = 'viz';
 
-        let margin = {top: 5, right: 10, bottom: 20, left: 110},
+        let margin = {top: 12.5, right: 10, bottom: 25, left: 110},
             width = document.getElementById('chart').clientWidth - margin.left - margin.right,
             height = document.getElementById('chart').clientHeight - margin.top - margin.bottom;
 
@@ -248,6 +248,10 @@ export function initChart() {
             setChart('viz');
             //Cambiamos valor actual
             currentType = 'viz';
+
+            setTimeout(() => {
+                setChartCanvas();
+            }, 4000);
         });
 
         document.getElementById('data_map').addEventListener('click', function() {
@@ -255,6 +259,10 @@ export function initChart() {
             setChart('map');
             //Cambiamos valor actual
             currentType = 'map';
+
+            setTimeout(() => {
+                setChartCanvas();
+            }, 4000);
         });
 
         //Animación del gráfico
