@@ -17,11 +17,8 @@ export function initChart() {
     d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_4/main/data/ocde_life_expectancy_v2_spanish.csv', function(error,data) {
         if (error) throw error;
 
-        // sort data
-        data.sort(function(b, a) { return +a.women_years_after - +b.women_years_after; });
-
         //Desarrollo del gráfico
-        let currentType = 'viz';
+        let currentType = 'viz', currentSex = 'male';
 
         let margin = {top: 12.5, right: 10, bottom: 25, left: 110},
             width = document.getElementById('chart').clientWidth - margin.left - margin.right,
@@ -35,7 +32,6 @@ export function initChart() {
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
         let paises = d3.map(data, function(d){return(d.Country)}).keys();
-        let tipos = ['men_years_after', 'women_years_after'];
         
         let y = d3.scaleBand()
             .domain(paises)
@@ -58,11 +54,11 @@ export function initChart() {
             .call(yAxis);           
 
         let x = d3.scaleLinear()
-            .domain([0, 30])
+            .domain([50, 92])
             .range([ 0 ,width ]);
         
         let xAxis = function(g) {
-            g.call(d3.axisBottom(x).ticks(3));
+            g.call(d3.axisBottom(x).ticks(5));
             svg.call(function(g) {
                 g.call(function(g){
                     g.selectAll('.tick line')
@@ -81,87 +77,20 @@ export function initChart() {
             .attr("transform", "translate(0," + height + ")")
             .call(xAxis);
 
-        let ySubgroup = d3.scaleBand()
-            .domain(tipos)
-            .range([0, y.bandwidth()])
-            .padding(0);
-
-        let color = d3.scaleOrdinal()
-            .domain(tipos)
-            .range([COLOR_PRIMARY_1, COLOR_COMP_1]);
-
         function initViz() {
+            //Hombres
             svg.append("g")
-                .selectAll("g")
+                .attr('class', 'chart-g')
+                .selectAll('mylines')
                 .data(data)
                 .enter()
-                .append("g")
-                .attr("transform", function(d) { return "translate(0," + y(d.Country) + ")"; })
-                .attr('class', function(d) {
-                    return 'grupo grupo_' + d.Country;
-                })
-                .selectAll("rect")
-                .data(function(d) { return tipos.map(function(key) { return {key: key, value: d[key]}; }); })
-                .enter()
-                .append("rect")
-                .attr('class', function(d) {
-                    return 'rect rect_' + d.key;
-                })
-                .attr("fill", function(d) { return color(d.key); })
-                .attr("x", x(0) )
-                .attr("y", function(d) { return ySubgroup(d.key); })
-                .attr("height", ySubgroup.bandwidth())
-                .attr("width", function(d) { return x(0); })
-                .on('mouseover', function(d,i,e) {
-                    console.log(d);
-                    //Opacidad en barras
-                    let css = e[i].getAttribute('class').split(' ')[1];
-                    let bars = svg.selectAll('.rect');                    
-            
-                    bars.each(function() {
-                        this.style.opacity = '0.4';
-                        let split = this.getAttribute('class').split(" ")[1];
-                        if(split == `${css}`) {
-                            this.style.opacity = '1';
-                        }
-                    });
-
-                    //Tooltip > Recuperamos el año de referencia
-                    let currentCountry = this.parentNode.classList.value;
-                    let sex = d.key == 'women_years_after' ? 'mujeres' : 'hombres';
-
-                    let html = '';
-                    if(d.Country == 'UE-27') {
-                        html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
-                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en la Unión Europea</p>';
-                    } else if (d.Country == 'OCDE') {
-                        html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
-                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en la OCDE</p>';
-                    } else {
-                        html = '<p class="chart__tooltip--title">' + currentCountry.split('_')[1] + '</p>' + 
-                            '<p class="chart__tooltip--text">Los años de vida esperados tras la jubiliación para <b>' + sex  + '</b> son <b>' + numberWithCommas3(parseFloat(d.value)) + '</b> en este país</p>';
-                    }                    
-                    
-                    tooltip.html(html);
-
-                    //Tooltip
-                    positionTooltip(window.event, tooltip);
-                    getInTooltip(tooltip);
-
-                })
-                .on('mouseout', function(d,i,e) {
-                    //Quitamos los estilos de la línea
-                    let bars = svg.selectAll('.rect');
-                    bars.each(function() {
-                        this.style.opacity = '1';
-                    });
-                
-                    //Quitamos el tooltip
-                    getOutTooltip(tooltip); 
-                })         
-                .transition()
-                .duration(2000)               
-                .attr("width", function(d) { return x(d.value); });
+                .append("line")
+                .attr("x1", function(d) { return x(d.men_exit); })
+                .attr("x2", function(d) { let suma = parseFloat(d.men_exit) + parseFloat(d.men_years_after); return x(suma); })
+                .attr("y1", function(d) { return y(d.Country) + y.bandwidth() / 2; })
+                .attr("y2", function(d) { return y(d.Country) + y.bandwidth() / 2; })
+                .attr("stroke", COLOR_PRIMARY_1)
+                .attr("stroke-width", "6px");
         }
     
         function animateChart() {
@@ -174,6 +103,44 @@ export function initChart() {
                 .transition()
                 .duration(2000)               
                 .attr("width", function(d) { return x(d.value); });
+        }
+
+        ///// CAMBIO HOMBRES-MUJERES
+        function setViz(sex) {
+            //Cambiamos estilo de botones
+            if(sex == 'male') {
+                //Cambiamos color botón
+                document.getElementById('data_female').classList.remove('active');
+                document.getElementById('data_male').classList.add('active');
+            } else {
+                //Cambiamos color botón
+                document.getElementById('data_female').classList.add('active');
+                document.getElementById('data_male').classList.remove('active');
+            }            
+
+            ///Removemos lo actual
+            svg.select('.chart-g')
+                .remove();
+
+            ///Nuevos datos con 'sex'
+            svg.append("g")
+                .attr('class', 'chart-g')
+                .selectAll('mylines')
+                .data(data)
+                .enter()
+                .append("line")
+                .attr("x1", function(d) { if(sex == 'male') { return x(d.men_exit); } else { return x(d.women_exit); }  })
+                .attr("x2", function(d) { if(sex == 'male') { let suma = parseFloat(d.men_exit) + parseFloat(d.men_years_after); return x(suma); } else { let suma = parseFloat(d.women_exit) + parseFloat(d.women_years_after); return x(suma); }  })
+                .attr("y1", function(d) { return y(d.Country) + y.bandwidth() / 2; })
+                .attr("y2", function(d) { return y(d.Country) + y.bandwidth() / 2; })
+                .attr("stroke", function(d) {
+                    if (sex == 'male') {
+                        return COLOR_PRIMARY_1;
+                    } else {
+                        return COLOR_COMP_1;
+                    }
+                } )
+                .attr("stroke-width", "6px");
         }
 
         ///// CAMBIO GRÁFICO-MAPA
@@ -196,53 +163,41 @@ export function initChart() {
                 }
             }            
         }
-
-        document.getElementById('order-male').addEventListener('click', function(e) {
-            setViz('men_years_after');
-
-            setTimeout(() => {
-                setChartCanvas();
-            }, 4000);
-        });
-
-        document.getElementById('order-female').addEventListener('click', function(e) {
-            setViz('women_years_after');
-
-            setTimeout(() => {
-                setChartCanvas();
-            }, 4000);
-        });
-
-        function setViz(tipo) {
-            // sort data
-            data.sort(function(b, a) { return +a[tipo] - +b[tipo]; });
-
-            //Reordenación de eje Y y de columnas
-            paises = d3.map(data, function(d){return(d.Country)}).keys();
-            y.domain(paises);
-            svg.select('.yaxis').call(yAxis);
-
-            svg.selectAll('.grupo')
-                .data(data)
-                .attr("transform", function(d) { return "translate(0," + y(d.Country) + ")"; })
-                .attr('class', function(d) {
-                    return 'grupo grupo_' + d.Country;
-                })
-                .selectAll(".rect")
-                .data(function(d) { return tipos.map(function(key) { return {key: key, value: d[key]}; }); })
-                .attr("x", x(0) )
-                .attr("y", function(d) { return ySubgroup(d.key); })
-                .attr("height", ySubgroup.bandwidth())
-                .attr("width", function(d) { return x(d.value); });
-        }
-
+        
         /////
         /////
-        // Resto - Chart
+        // Resto
         /////
         /////
         initViz();
 
+        /////// Gráfico - Hombres o mujeres
+        document.getElementById('data_male').addEventListener('click', function() {
+            //Cambiamos valor actual
+            currentSex = 'male';
+
+            //Cambiamos gráfico
+            setViz(currentSex);
+            
+
+            setTimeout(() => {
+                setChartCanvas();
+            }, 4000);
+        });
+
+        document.getElementById('data_female').addEventListener('click', function() {
+            //Cambiamos valor actual
+            currentSex = 'female';
+
+            //Cambiamos gráfico
+            setViz(currentSex);            
+
+            setTimeout(() => {
+                setChartCanvas();
+            }, 4000);
+        });
+
+        /////// Gráfico - Gráfico o mapa
         document.getElementById('data_viz').addEventListener('click', function() {            
             //Cambiamos gráfico
             setChart('viz');
