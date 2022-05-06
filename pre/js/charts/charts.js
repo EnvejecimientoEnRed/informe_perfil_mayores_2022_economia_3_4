@@ -14,8 +14,10 @@ let tooltip = d3.select('#tooltip');
 
 export function initChart() {
     //Lectura de datos
-    d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_4/main/data/ocde_life_expectancy_v2_spanish.csv', function(error,data) {
+    d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_4/clevelandPlot/data/ocde_life_expectancy_v2_spanish.csv', function(error,data) {
         if (error) throw error;
+
+        data.sort(function(b, a) { return +b.men_exit - +a.men_exit; });
 
         //Desarrollo del gráfico
         let currentType = 'viz', currentSex = 'male';
@@ -58,12 +60,12 @@ export function initChart() {
             .range([ 0 ,width ]);
         
         let xAxis = function(g) {
-            g.call(d3.axisBottom(x).ticks(5));
+            g.call(d3.axisBottom(x).tickValues([50,60,65,70,80,90]));
             svg.call(function(g) {
                 g.call(function(g){
                     g.selectAll('.tick line')
                         .attr('class', function(d,i) {
-                            if (d == 0) {
+                            if (d == 65) {
                                 return 'line-special';
                             }
                         })
@@ -123,6 +125,19 @@ export function initChart() {
                 .remove();
 
             ///Nuevos datos con 'sex'
+            data.sort(function(b, a) { 
+                if(sex == 'male') {
+                    return +b.men_exit - +a.men_exit;
+                } else {
+                    return +b.women_exit - +a.women_exit;
+                } });
+
+            //Ordenación eje
+            paises = d3.map(data, function(d){return(d.Country)}).keys();
+            y.domain(paises);
+            svg.select('.yaxis').call(yAxis);
+            
+            //Gráfico
             svg.append("g")
                 .attr('class', 'chart-g')
                 .selectAll('mylines')
