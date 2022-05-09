@@ -87,24 +87,74 @@ export function initChart() {
                 .data(data)
                 .enter()
                 .append("line")
-                .attr("x1", function(d) { return x(d.men_exit); })
-                .attr("x2", function(d) { let suma = parseFloat(d.men_exit) + parseFloat(d.men_years_after); return x(suma); })
+                .attr('class', function(d) {
+                    return 'line line_' + d.Country;
+                })
+                .attr("x1", function(d) { return 0; })
+                .attr("x2", function(d) { return 0 })
                 .attr("y1", function(d) { return y(d.Country) + y.bandwidth() / 2; })
                 .attr("y2", function(d) { return y(d.Country) + y.bandwidth() / 2; })
                 .attr("stroke", COLOR_PRIMARY_1)
-                .attr("stroke-width", "6px");
+                .attr('opacity', function(d) {
+                    if(d.Country == 'España' || d.Country == 'UE-27' || d.Country == 'OCDE') { return '1'} else { return '0.55'; }
+                })
+                .attr("stroke-width", "6px")
+                .on('mouseover', function(d,i,e) {
+                    //Opacidad en barras
+                    let bars = svg.selectAll('.line');                    
+            
+                    bars.each(function() {
+                        this.style.opacity = '0.15';
+                    });
+                    this.style.opacity = '1';
+
+                    //Tooltip
+                    let html = '';
+                    let sex = currentSex == 'male' ? 'los hombres' : 'las mujeres';
+                    let sexSearch = currentSex == 'male' ? ['men_exit', 'men_years_after'] : ['women_exit', 'women_years_after'];
+                    let suma = parseFloat(d[sexSearch[0]]) + parseFloat(d[sexSearch[1]]);
+                    suma = suma.toFixed(2);
+
+                    if(d.Country == 'UE-27') {
+                        html = '<p class="chart__tooltip--title">' + d.Country + '</p>' + 
+                            '<p class="chart__tooltip--text">La edad real de jubilación para <b>' + sex  + '</b> es <b>' + numberWithCommas3(parseFloat(d[sexSearch[0]])) + '</b> años y se espera que vivan <b>' + numberWithCommas3(parseFloat(d[sexSearch[1]])) + '</b> años más (hasta los <b>' + numberWithCommas3(suma) + '</b>) en la Unión Europea</p>';
+                    } else if (d.Country == 'OCDE') {
+                        html = '<p class="chart__tooltip--title">' + d.Country + '</p>' + 
+                            '<p class="chart__tooltip--text">La edad real de jubilación para <b>' + sex  + '</b> es <b>' + numberWithCommas3(parseFloat(d[sexSearch[0]])) + '</b> años y se espera que vivan <b>' + numberWithCommas3(parseFloat(d[sexSearch[1]])) + '</b> años más (hasta los <b>' + numberWithCommas3(suma) + '</b>) en la OCDE</p>';
+                    } else {
+                        html = '<p class="chart__tooltip--title">' + d.Country + '</p>' + 
+                            '<p class="chart__tooltip--text">La edad real de jubilación para <b>' + sex  + '</b> es <b>' + numberWithCommas3(parseFloat(d[sexSearch[0]])) + '</b> años y se espera que vivan <b>' + numberWithCommas3(parseFloat(d[sexSearch[1]])) + '</b> años más (hasta los <b>' + numberWithCommas3(suma) + '</b>) en este país</p>';
+                    }                    
+                    
+                    tooltip.html(html);
+
+                    //Tooltip
+                    positionTooltip(window.event, tooltip);
+                    getInTooltip(tooltip);
+                })
+                .on('mouseout', function(d,i,e) {
+                    //Quitamos los estilos de la línea
+                    let bars = svg.selectAll('.line');
+
+                    bars.each(function() {
+                        if(this.classList[1] == 'line_España' || this.classList[1] == 'line_UE-27' || this.classList[1] == 'line_OCDE') {
+                            this.style.opacity = '1';
+                        } else {
+                            this.style.opacity = '0.55';
+                        }                        
+                    });
+                
+                    //Quitamos el tooltip
+                    getOutTooltip(tooltip);
+                })
+                .transition()
+                .duration(2500)
+                .attr("x1", function(d) { return x(d.men_exit); })
+                .attr("x2", function(d) { let suma = parseFloat(d.men_exit) + parseFloat(d.men_years_after); return x(suma); })
         }
     
         function animateChart() {
-            svg.selectAll(".rect")
-                .attr("fill", function(d) { return color(d.key); })
-                .attr("x", x(0) )
-                .attr("y", function(d) { return ySubgroup(d.key); })
-                .attr("height", ySubgroup.bandwidth())
-                .attr("width", function(d) { return x(0); })            
-                .transition()
-                .duration(2000)               
-                .attr("width", function(d) { return x(d.value); });
+            setViz(currentSex);
         }
 
         ///// CAMBIO HOMBRES-MUJERES
@@ -144,8 +194,11 @@ export function initChart() {
                 .data(data)
                 .enter()
                 .append("line")
-                .attr("x1", function(d) { if(sex == 'male') { return x(d.men_exit); } else { return x(d.women_exit); }  })
-                .attr("x2", function(d) { if(sex == 'male') { let suma = parseFloat(d.men_exit) + parseFloat(d.men_years_after); return x(suma); } else { let suma = parseFloat(d.women_exit) + parseFloat(d.women_years_after); return x(suma); }  })
+                .attr('class', function(d) {
+                    return 'line line_' + d.Country;
+                })
+                .attr("x1", function(d) { return 0; })
+                .attr("x2", function(d) { return 0; })
                 .attr("y1", function(d) { return y(d.Country) + y.bandwidth() / 2; })
                 .attr("y2", function(d) { return y(d.Country) + y.bandwidth() / 2; })
                 .attr("stroke", function(d) {
@@ -154,8 +207,63 @@ export function initChart() {
                     } else {
                         return COLOR_COMP_1;
                     }
-                } )
-                .attr("stroke-width", "6px");
+                })
+                .attr('opacity', function(d) {
+                    if(d.Country == 'España' || d.Country == 'UE-27' || d.Country == 'OCDE') { return '1'} else { return '0.55'; }
+                })
+                .attr("stroke-width", "6px")
+                .on('mouseover', function(d,i,e) {
+                    //Opacidad en barras
+                    let bars = svg.selectAll('.line');                    
+            
+                    bars.each(function() {
+                        this.style.opacity = '0.15';
+                    });
+                    this.style.opacity = '1';
+
+                    //Tooltip
+                    let html = '';
+                    let sex = currentSex == 'male' ? 'los hombres' : 'las mujeres';
+                    let sexSearch = currentSex == 'male' ? ['men_exit', 'men_years_after'] : ['women_exit', 'women_years_after'];
+                    let suma = parseFloat(d[sexSearch[0]]) + parseFloat(d[sexSearch[1]]);
+                    suma = suma.toFixed(2);
+
+                    if(d.Country == 'UE-27') {
+                        html = '<p class="chart__tooltip--title">' + d.Country + '</p>' + 
+                            '<p class="chart__tooltip--text">La edad real de jubilación para <b>' + sex  + '</b> es <b>' + numberWithCommas3(parseFloat(d[sexSearch[0]])) + '</b> años y se espera que vivan <b>' + numberWithCommas3(parseFloat(d[sexSearch[1]])) + '</b> años más (hasta los <b>' +  numberWithCommas3(suma) + '</b>) en la Unión Europea</p>';
+                    } else if (d.Country == 'OCDE') {
+                        html = '<p class="chart__tooltip--title">' + d.Country + '</p>' + 
+                            '<p class="chart__tooltip--text">La edad real de jubilación para <b>' + sex  + '</b> es <b>' + numberWithCommas3(parseFloat(d[sexSearch[0]])) + '</b> años y se espera que vivan <b>' + numberWithCommas3(parseFloat(d[sexSearch[1]])) + '</b> años más (hasta los <b>' + numberWithCommas3(suma) + '</b>) en la OCDE</p>';
+                    } else {
+                        html = '<p class="chart__tooltip--title">' + d.Country + '</p>' + 
+                            '<p class="chart__tooltip--text">La edad real de jubilación para <b>' + sex  + '</b> es <b>' + numberWithCommas3(parseFloat(d[sexSearch[0]])) + '</b> años y se espera que vivan <b>' + numberWithCommas3(parseFloat(d[sexSearch[1]])) + '</b> años más (hasta los <b>' + numberWithCommas3(suma) + '</b>) en este país</p>';
+                    }                    
+                    
+                    tooltip.html(html);
+
+                    //Tooltip
+                    positionTooltip(window.event, tooltip);
+                    getInTooltip(tooltip);
+                })
+                .on('mouseout', function(d,i,e) {
+                    //Quitamos los estilos de la línea
+                    let bars = svg.selectAll('.line');
+
+                    bars.each(function() {
+                        if(this.classList[1] == 'line_España' || this.classList[1] == 'line_UE-27' || this.classList[1] == 'line_OCDE') {
+                            this.style.opacity = '1';
+                        } else {
+                            this.style.opacity = '0.55';
+                        }                        
+                    });
+                
+                    //Quitamos el tooltip
+                    getOutTooltip(tooltip);
+                })
+                .transition()
+                .duration(2500)
+                .attr("x1", function(d) { if(sex == 'male') { return x(d.men_exit); } else { return x(d.women_exit); }  })
+                .attr("x2", function(d) { if(sex == 'male') { let suma = parseFloat(d.men_exit) + parseFloat(d.men_years_after); return x(suma); } else { let suma = parseFloat(d.women_exit) + parseFloat(d.women_years_after); return x(suma); }  });
         }
 
         ///// CAMBIO GRÁFICO-MAPA
@@ -192,8 +300,7 @@ export function initChart() {
             currentSex = 'male';
 
             //Cambiamos gráfico
-            setViz(currentSex);
-            
+            setViz(currentSex);            
 
             setTimeout(() => {
                 setChartCanvas();
