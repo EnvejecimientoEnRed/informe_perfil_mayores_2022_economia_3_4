@@ -128,8 +128,6 @@ button {
                 padding-left: 22px;
                 margin-right: 16px;
 
-                cursor: pointer;
-
                 //En función de la clase CSS que le acompañe, tendrá un color u otro
                 &::before {
                     position: absolute;
