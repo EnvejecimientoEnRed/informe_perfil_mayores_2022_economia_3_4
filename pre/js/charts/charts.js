@@ -14,7 +14,7 @@ let tooltip = d3.select('#tooltip');
 
 export function initChart() {
     //Lectura de datos
-    d3.csv('https://raw.githubusercontent.com/CarlosMunozDiazCSIC/informe_perfil_mayores_2022_economia_3_4/clevelandPlot/data/ocde_life_expectancy_v2_spanish.csv', function(error,data) {
+    d3.csv('https://raw.githubusercontent.com/EnvejecimientoEnRed/informe_perfil_mayores_2022_economia_3_4/clevelandPlot/data/ocde_life_expectancy_v2_spanish.csv', function(error,data) {
         if (error) throw error;
 
         data.sort(function(b, a) { return +b.men_exit - +a.men_exit; });
